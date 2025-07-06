@@ -26,20 +26,20 @@ This repo also includes a `/evidence` folder and a `/docs` folder, the first one
 (This are the pin connections for a Arduino board, for other components' pin connections, check `/docs`)
 - Pin 2 -> DT, HX711 module
 - Pin 3 -> SCK, HX711 module
-- Pin 4 -> 3era columna de Keypad 4x4
+- Pin 4 -> Keypad's 4x4 third column
 - Pin 5 -> ENA, L298N module
 - Pin 6 -> IN1, L298N module
 - Pin 7 -> IN2, L298N module
-- Pin 8 -> 2da columna de Keypad 4x4
-- Pin 9 -> 1era columna de Keypad 4x4
-- Pin 10 -> 4ta fila de Keypad 4x4
-- Pin 11 -> 3era fila de Keypad 4x4
-- Pin 12 -> 2da fila de Keypad 4x4
-- Pin 13 -> 1era fila de Keypad 4x4
-- Pin A0 -> CLK, módulo HT16K33
-- Pin A1 -> DIO, módulo HT16K33
-- Pin A2 -> 4ta columna de Keypad 4x4
-- Pin A4 -> SDA, pantalla LCD I2C
-- Pin A5 -> SCL, pantalla LCD I2C
+- Pin 8 -> Keypad's 4x4 second column
+- Pin 9 -> Keypad's 4x4 first column
+- Pin 10 -> Keypad's 4x4 fourth row
+- Pin 11 -> Keypad's 4x4 third row
+- Pin 12 -> Keypad's 4x4 second row
+- Pin 13 -> de Keypad's 4x4 first row
+- Pin A0 -> CLK, HT16K33 module
+- Pin A1 -> DIO, HT16K33 module
+- Pin A2 -> Keypad's 4x4 fourth column
+- Pin A4 -> SDA, LCD I2C screen
+- Pin A5 -> SCL, LCD I2C screen
 
   `TO BE EDITED`

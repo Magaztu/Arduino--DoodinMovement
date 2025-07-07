@@ -20,7 +20,7 @@ It has two modes: coin weight and spin levels.
 This project also uses a (SCALE MODEL), (SCALE CONTROLLER), 4X4 KEYPAD, (MOTOR CONTROLLER), DC MOTOR, HANDCRAFT MATERIALS.
 
 ### Documentation:
-This repo also includes a `/evidence` folder and a `/docs` folder, the first one includes pictures of this prototype and the later is a .docx with further information about it.
+This repo also includes a `/evidence` folder and a `/docs` folder, the first one includes pictures of this prototype and the later is a .docx with further information about it [In Spanish].
 
 #### Pin connection guide:
 (This are the pin connections for a Arduino board, for other components' pin connections, check `/docs`)

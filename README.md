@@ -24,6 +24,7 @@ This repo also includes a `/evidence` folder and a `/docs` folder, the first one
 
 #### Pin connection guide:
 (This are the pin connections for a Arduino board, for other components' pin connections, check `/docs`)
+{The ones in `/docs` are in Spanish, I'll provide translations in the future}
 - Pin 2 -> DT, HX711 module
 - Pin 3 -> SCK, HX711 module
 - Pin 4 -> Keypad's 4x4 third column

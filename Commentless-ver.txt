@@ -1,0 +1,367 @@
+ int IN1 = 6;
+ int IN2 = 7;
+ int ENA = 5;
+ int VELOCIDAD;
+ 
+ #include <HX711.h>
+ #define DT 2
+ #define SCK 3
+ 
+ HX711 celda;
+ #include <Wire.h>
+ #include <LiquidCrystal_I2C.h>
+ LiquidCrystal_I2C lcd(0x27,16,2);
+ 
+ #include <TM1637Display.h>
+ #define CLK 14
+ #define DIO 15
+ TM1637Display display(CLK, DIO);
+
+ #include <Keypad.h>
+
+ const byte filas = 4; 
+ const byte columnas = 4; 
+
+ char teclas[filas][columnas] = {
+ {'1','2','3','A'},{'4','5','6','B'},
+ {'7','8','9','C'},{'*','0','#','D'}
+ };
+
+ byte pinesFilas[filas] = {13,12,11,10};
+ 
+ byte pinesColumnas[columnas] = {9,8,4,16};
+ 
+ Keypad teclado = Keypad(makeKeymap(teclas), pinesFilas,
+ pinesColumnas, filas, columnas);
+ 
+ const uint8_t modo[] = {
+ SEG_A | SEG_C | SEG_E , //M
+ SEG_D | SEG_E | SEG_G | SEG_C , //o
+ SEG_D | SEG_E | SEG_G | SEG_C | SEG_B, //d
+ SEG_D | SEG_E | SEG_G | SEG_C }; //o
+ 
+ void setup() {
+ Wire.begin(); 
+ 
+ lcd.begin(16,2);
+ lcd.backlight(); 
+ 
+ lcd.setCursor(0,0); 
+ lcd.print("---- SOMBRA");
+ delay(1000);
+ lcd.setCursor(0,1);
+ lcd.print("ESPÍN----");
+ delay(1000);
+ display.setBrightness(1);
+ display.clear();
+ pinMode(IN1, OUTPUT);
+ pinMode(IN2, OUTPUT);
+ pinMode(ENA, OUTPUT);
+ pinMode(13, OUTPUT);
+ Serial.begin(9600);
+ Serial.println("Balanza con celda de carga: ");
+ celda.begin(DT,SCK);
+ celda.set_scale(926.f); 
+ 5g (5ctvs)
+ celda.tare(); 
+ Serial.println(celda.get_units(30)); 
+
+ lcd.clear();
+ lcd.setCursor(0,0); 
+ lcd.print("Esperando...");
+ display.setSegments(modo,4,0);
+ delay(1000);
+ }
+
+ const uint8_t AUTO[] = {
+ SEG_A | SEG_B | SEG_C | SEG_E | SEG_F | SEG_G, //A
+ SEG_E | SEG_C | SEG_D , //U
+ SEG_D | SEG_E | SEG_F | SEG_G , //t
+ SEG_D | SEG_E | SEG_G | SEG_C }; //O
+const uint8_t manu[] = {
+ SEG_A | SEG_C | SEG_E , //M
+ SEG_A | SEG_B | SEG_C | SEG_E | SEG_F | SEG_G, //a
+ SEG_C | SEG_G | SEG_E , //n
+ SEG_E | SEG_C | SEG_D }; //u
+ const uint8_t maxv[] = {
+ SEG_D | SEG_F | SEG_E, //L
+ SEG_F | SEG_E, //i
+ SEG_A | SEG_C | SEG_E , //m
+ SEG_B | SEG_D | SEG_F | SEG_C | SEG_E }; //v
+ const uint8_t maxc[] = {
+ SEG_D | SEG_F | SEG_E, //L
+ SEG_F | SEG_E, //i
+ SEG_A | SEG_C | SEG_E , //m
+ SEG_A | SEG_D | SEG_E | SEG_F }; //C
+ const uint8_t ctvs[] = {
+ SEG_D | SEG_E | SEG_G , //c
+ SEG_D | SEG_E | SEG_F | SEG_G , //t
+ SEG_B | SEG_D | SEG_F | SEG_C | SEG_E , //v
+ SEG_A | SEG_C | SEG_D | SEG_F | SEG_G }; //s
+ const uint8_t dolr[] = {
+ SEG_D | SEG_E | SEG_G | SEG_C | SEG_B, //d
+ SEG_D | SEG_E | SEG_G | SEG_C , //o
+ SEG_D | SEG_F | SEG_E, //L
+SEG_G | SEG_E }; //o
+ bool manual = false; 
+
+ int velmax = 0; 
+ int cantmax = 0;
+ bool dolar = false; 
+ 
+ float anteriorGramaje = 0; 
+ int totalmonedas = 0;
+ float valor = 0;
+ int nivel = 0;
+ void loop() {
+ delay(250);
+ 
+ char tecla = teclado.getKey(); 
+
+ delay(250);
+ if(tecla){
+ if (tecla == '*'){
+ 
+ manual = false;
+ display.setSegments(AUTO,4,0);
+delay(500);
+ }
+ if (tecla == '#'){
+ 
+ manual = true;
+ display.setSegments(manu,4,0);
+ delay(500);
+ }
+ if ((tecla == 'A') && (manual == true)){
+ 
+ display.setSegments(maxv,4,0);
+ delay(100);
+ CONFIGURARVEL();
+ display.clear();
+ display.showNumberDec(velmax, false); 
+ delay(500);
+ }
+ if ((tecla == 'B') && (manual == true)){
+ 
+ display.setSegments(maxc,4,0);
+ delay(100);
+ CONFIGURARCANT();
+ display.clear();
+ display.showNumberDec(cantmax, false);
+
+ delay(500);
+}
+ if ((tecla == 'C') && (manual == true)){
+ 
+ dolar = false;
+ display.setSegments(ctvs,4,0);
+ delay(500);
+ }
+ if ((tecla == 'D') && (manual == true)){
+ 
+ dolar = true;
+ display.setSegments(dolr,4,0);
+ delay(500);
+ }
+ }else{
+ if(manual == false){ 
+ float gramaje; 
+ float gramuca = celda.get_units(30); 
+
+ if (gramuca <= 1)
+ gramaje = 0; 
+
+ if (gramuca >= 1.2) 
+
+ gramaje = celda.get_units(10);
+
+ Serial.println("Valor (gramos): ");
+ Serial.println(gramaje, 1);
+ delay(500);
+ VELOCIDAD = ((gramaje / 5) * 26) + 125; 
+
+ Serial.println(VELOCIDAD);
+ nivel = (VELOCIDAD- 125) / 26;
+
+ if(VELOCIDAD < 150){
+ VELOCIDAD = 0; nivel = 0;}
+
+ if(VELOCIDAD > 255){
+ VELOCIDAD = 255; nivel = 6;} 
+
+ analogWrite(ENA, VELOCIDAD);
+ digitalWrite(IN1, LOW);
+ digitalWrite(IN2, HIGH);
+ 
+ if (gramaje- anteriorGramaje >= 2.2) {
+ totalmonedas += 1;
+ }
+ else if (anteriorGramaje- gramaje >= 2.2) {
+ totalmonedas-= 1;
+ }
+ if(totalmonedas < 0) 
+ totalmonedas = 0;
+ 
+ if (gramaje- anteriorGramaje >= 1.7 && gramaje
+ anteriorGramaje <= 2.6) {
+ valor += 0.1; 
+ } else if (anteriorGramaje- gramaje >= 0.7 &&
+ anteriorGramaje- gramaje <= 2.6) {
+ valor-= 0.1; 
+ }
+ if (gramaje- anteriorGramaje >= 5.3 && gramaje
+anteriorGramaje <= 8.4) {
+ valor += 1; 
+
+ } else if (anteriorGramaje- gramaje >= 5.3 &&
+ anteriorGramaje- gramaje <= 8.4) {
+ valor-= 1; 
+
+ }
+ 
+ if(valor < 0) 
+ valor = 0;
+ 
+ Serial.print("Total monedas: ");
+ Serial.println(totalmonedas);
+ Serial.print("Valor: ");
+ Serial.println(valor, 1); 
+
+ display.clear();
+ display.showNumberDec(totalmonedas, false);
+
+ anteriorGramaje = gramaje;
+ 
+ lcd.clear();
+ lcd.setCursor(0,0); 
+ lcd.print("Velocidad: ");
+ if (nivel == 6){
+ lcd.print("MAX");
+}else{
+ lcd.print(nivel);
+ }
+ lcd.setCursor(0,1); 
+ lcd.print("Valor: ");
+ lcd.print(valor);
+ //digitalWrite(ENA, LOW);
+ celda.power_down(); 
+ delay(200);
+ celda.power_up();
+ }
+ if(manual == true){
+ float gramaje;
+ int unidad;
+ 
+ if(dolar == true){ 
+
+ unidad = 8;
+ }
+ if(dolar == false){ 
+
+ unidad = 2;
+ }
+ float gramuca = celda.get_units(30);
+ if (gramuca <= 1)
+ gramaje = 0;
+ if (gramuca >= 1.2)
+ gramaje = celda.get_units(10);
+ Serial.println("Valor MANUAL (gramos): ");
+ Serial.println(gramaje, 1);
+ delay(500);
+ VELOCIDAD = ((gramaje / unidad) * 26) + 125; 
+
+ Serial.println(VELOCIDAD);
+ nivel = (VELOCIDAD- 125) / 26;
+ if(VELOCIDAD < 150){
+ VELOCIDAD = 0; nivel = 0; totalmonedas = 0; valor = 0;}
+ if(VELOCIDAD > 255){
+ VELOCIDAD = 255; nivel = 6;}
+ 
+ analogWrite(ENA, VELOCIDAD);
+ digitalWrite(IN1, LOW);
+ digitalWrite(IN2, HIGH);
+ if (totalmonedas >= cantmax || nivel >= velmax) {
+
+ Serial.println("Max lim!");
+ lcd.setCursor(0,0); 
+
+ lcd.print("-> Lim alcanzado");
+ delay(500);
+ return; 
+ }
+ 
+ if (gramaje- anteriorGramaje >= 2.2) {
+ totalmonedas += 1;
+ }
+ else if (anteriorGramaje- gramaje >= 2.2) {
+ totalmonedas-= 1;
+ }
+ if(totalmonedas < 0)
+ totalmonedas = 0;
+ if (dolar == true){ 
+ valor = totalmonedas * 1;
+ }
+ if (dolar == false){ 
+ valor = totalmonedas * 0.1;
+ }
+if(valor < 0)
+ valor = 0;
+ Serial.print("Total monedas: ");
+ Serial.println(totalmonedas);
+ Serial.print("Valor: ");
+ Serial.println(valor, 1);
+ display.clear();
+ display.showNumberDec(totalmonedas, false);
+ 
+ if ((nivel != velmax) && (totalmonedas != cantmax))
+ anteriorGramaje = gramaje;
+ 
+ lcd.clear();
+ lcd.setCursor(0,0); 
+ lcd.print("Velocidad: ");
+ if (nivel == velmax){
+ lcd.print("MAX");
+ }else{
+ lcd.print(nivel);
+ }
+ lcd.setCursor(0,1);
+ lcd.print("Valor: ");
+ lcd.print(valor);
+ //digitalWrite(ENA, LOW);
+celda.power_down(); 
+ delay(200);
+ celda.power_up();
+ }
+ }
+ }
+ String acumulador;
+ void CONFIGURARVEL(){
+ char tecla;
+ acumulador = "";
+ velmax = 0;
+ do {
+ tecla = teclado.getKey();
+ 
+ if (tecla != NO_KEY) {
+ acumulador = tecla;
+ velmax = acumulador.toInt();
+ }
+ } while (velmax < 1 || velmax > 6);
+ }
+ void CONFIGURARCANT(){
+ char tecla;
+ bool salir = false;
+ acumulador = "";
+do {
+ tecla = teclado.getKey();
+ 
+ if (tecla != NO_KEY && tecla >= '0' && tecla <= '9') {
+ acumulador += tecla; 
+ }
+ if (tecla == '#') {
+ salir = true;
+ }
+ delay(50);
+ } while (salir == false);
+ cantmax = acumulador.toInt();
+ }
